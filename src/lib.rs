@@ -26,9 +26,12 @@ pub struct InteractionPlugin;
 
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (handle_interactor_events, update_interactor_targets))
-            .add_event::<InteractorFiredEvent>()
-            .add_event::<InteractionEvent>();
+        app.add_systems(
+            Update,
+            (handle_interactor_events, update_interactor_targets, update_interactable_predicates),
+        )
+        .add_event::<InteractorFiredEvent>()
+        .add_event::<InteractionEvent>();
     }
 }
 
@@ -43,7 +46,7 @@ fn handle_interactor_events(
 
         if let Some(interactable_entity) = interactor.closest {
             let interactable = interactable_query.get(interactable_entity).unwrap();
-            if interactable.exclusive {
+            if interactable.exclusive && interactable.possible {
                 event_writer.send(InteractionEvent {
                     interactor: *interactor_entity,
                     interactable: interactable_entity,
@@ -52,7 +55,7 @@ fn handle_interactor_events(
             } else {
                 for interactable_entity in &interactor.targets {
                     let interactable = interactable_query.get(*interactable_entity).unwrap();
-                    if !interactable.exclusive {
+                    if !interactable.exclusive && interactable.possible {
                         event_writer.send(InteractionEvent {
                             interactor: *interactor_entity,
                             interactable: *interactable_entity,
@@ -73,7 +76,11 @@ fn update_interactor_targets(
         let interactor_transform = transform_query.get(interactor_entity).unwrap();
 
         let mut closest_active_interactable: Option<(f32, Entity)> = None;
+        interactor.targets.clear();
         for (interactable_entity, interactable) in interactable_query.iter_mut() {
+            if !interactable.enabled {
+                continue;
+            }
             let interactable_transform = transform_query.get(interactable_entity).unwrap();
             let interactable_distance_squared = interactable_transform
                 .translation()
@@ -85,7 +92,7 @@ fn update_interactor_targets(
                 ),
             );
             if interactable_distance_squared < interactable.max_distance_squared
-                && interactable_arccosine < PI / 8.0
+                && interactable_arccosine < PI / 4.0
             {
                 interactor.targets.insert(interactable_entity);
                 if let Some((arccosine, _)) = closest_active_interactable {
@@ -97,8 +104,6 @@ fn update_interactor_targets(
                     closest_active_interactable =
                         Some((interactable_arccosine, interactable_entity));
                 }
-            } else {
-                interactor.targets.remove(&interactable_entity);
             }
         }
         interactor.closest = if let Some((_, interactable_entity)) = closest_active_interactable {
@@ -106,5 +111,21 @@ fn update_interactor_targets(
         } else {
             None
         }
+    }
+}
+
+fn update_interactable_predicates(world: &mut World) {
+    let mut interactable_query = world.query::<(Entity, &mut Interactable)>();
+    let mut interactables = vec![];
+    for (interactable_entity, interactable) in interactable_query.iter(world) {
+        interactables.push((interactable_entity, (*interactable).clone()));
+    }
+    for (interactable_entity, interactable) in interactables.iter_mut() {
+        if let Some(predicate) = &interactable.predicate {
+            interactable.possible = predicate(*interactable_entity, world);
+        }
+    }
+    for ((_, mut interactable), (_, temp)) in interactable_query.iter_mut(world).zip(interactables.into_iter()) {
+        *interactable = temp;
     }
 }
