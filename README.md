@@ -2,7 +2,6 @@
 
 ![License](https://img.shields.io/badge/license-0BSD%2FMIT%2FApache-blue.svg)
 ![Tag](https://img.shields.io/github/v/tag/exvacuum/bevy_basic_interaction)
-![Build](https://img.shields.io/github/actions/workflow/status/exvacuum/bevy_basic_interaction/rust.yml)
 
 This crate provides an `InteractionPlugin` which enables a basic interaction system.
 
@@ -20,7 +19,7 @@ If enough people (like literally 1 person) want this on crates.io I'll consider 
 
 ```toml
 [dependencies.bevy_basic_interaction]
-git = "https://github.com/exvacuum/bevy_basic_interaction"
+git = "https://git.exvacuum.dev/bevy_basic_interaction"
 ```
 
 ## Usage
