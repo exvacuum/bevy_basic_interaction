@@ -11,6 +11,7 @@ This plugin is mostly for my own internal use, but feel free to use it or contri
 
 | Crate Version | Bevy Version |
 |---            |---           |
+| 0.2           | 0.15         |
 | 0.1           | 0.14         |
 
 ## Installation

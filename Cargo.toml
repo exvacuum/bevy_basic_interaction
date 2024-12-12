@@ -1,9 +1,9 @@
 [package]
 name = "bevy_basic_interaction"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies.bevy]
-version = "0.14"
+version = "0.15"
 default-features = false
 
